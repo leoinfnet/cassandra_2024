@@ -1,0 +1,28 @@
+docker run -it --rm --name cassandra1  --network cassandra -P   -e CASSANDRA_CLUSTER_NAME=Cluster1 -v /Users/leonardogloria/infnet/pos-graduacao/cassandra/config/cassandra1/cassandra-env.sh:/opt/cassandra/conf/cassandra-env.sh cassandra:latest
+
+docker run -it --rm --name cassandra2  --network cassandra -P -e CASSANDRA_SEEDS=cassandra1  -e CASSANDRA_CLUSTER_NAME=Cluster1 -v /Users/leonardogloria/infnet/pos-graduacao/cassandra/config/cassandra2/cassandra-env.sh:/opt/cassandra/conf/cassandra-env.sh cassandra:latest
+
+=== EXPORTER 
+
+
+docker run --rm -p 8080:8080 --name exporter1 --network cassandra -e CASSANDRA_EXPORTER_CONFIG_host=cassandra1:7199 --read-only --tmpfs=/tmp criteord/cassandra_exporter:latest
+
+
+docker run --rm -p 8081:8080 --name exporter2 --network cassandra -e CASSANDRA_EXPORTER_CONFIG_host=cassandra2:7199 --read-only --tmpfs=/tmp criteord/cassandra_exporter:latest
+
+====== PROMETHEUS
+
+docker run --name prometheus --rm -it --network cassandra -v /Users/leonardogloria/infnet/pos-graduacao/cassandra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml -p 9090:9090 prom/prometheus 
+
+======= GRAFANA
+docker run --name grafana --rm -it --network cassandra -p 3000:3000 grafana/grafana-enterprise
+
+
+===== CASSANDRA_REAPER
+docker run --rm \
+ -p 8083:8080 \
+ -p 8084:8081 \
+ -e "REAPER_JMX_AUTH_USERNAME=reaper" \
+ -e "REAPER_JMX_AUTH_PASSWORD=123456" \
+ --network cassandra \
+ thelastpickle/cassandra-reaper:latest
